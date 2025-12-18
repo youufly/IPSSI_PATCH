@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Service Base de Données
+  db:
+    image: mysql:8.0-debian # Utiliser une version spécifique et stable
+    container_name: projet-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - backend-net
+    # Sécurité : Ne pas exposer le port 3306 à l'hôte (ports:), utiliser seulement le réseau interne
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_NICE  # Nécessaire pour MySQL parfois, mais on limite les autres
+
+  # Service Backend (API)
+  backend:
+    build: ./backend
+    container_name: projet-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      # Pour la connexion sécurisée SQL, s'assurer que le code backend active SSL/TLS si supporté
+    networks:
+      - backend-net
+      - frontend-net
+    depends_on:
+      - db
+
+  # Service Frontend (Site Web)
+  frontend:
+    build: ./frontend
+    container_name: projet-frontend
+    restart: unless-stopped
+    ports:
+      - "80:8080" # Nginx non-root écoute souvent sur 8080 par défaut
+    networks:
+      - frontend-net
+    depends_on:
+      - backend
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+    internal: true # Ce réseau n'a pas accès à internet (optionnel, pour durcir)
