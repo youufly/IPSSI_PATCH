@@ -20,4 +20,4 @@ USER node
 # Exposition du port (interne au conteneur)
 EXPOSE 3000
 
-CMD ["node", "src/index.js"]
+CMD ["node", "server.js"]

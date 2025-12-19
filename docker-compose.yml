@@ -16,16 +16,14 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     # Sécurité : Ne pas exposer le port 3306 à l'hôte (ports:), utiliser seulement le réseau interne
-    cap_drop:
-      - ALL
-    cap_add:
-      - SYS_NICE  # Nécessaire pour MySQL parfois, mais on limite les autres
 
   # Service Backend (API)
   backend:
     build: ./backend
     container_name: projet-backend
     restart: unless-stopped
+    ports:
+      - "8000:8000" # Expose l'API pour que le navigateur puisse l'atteindre
     environment:
       DB_HOST: db
       DB_USER: ${DB_USER}
